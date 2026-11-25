@@ -28,4 +28,34 @@ function renderRestaurants(){restaurantList.innerHTML=data.restaurants.map((r,i)
 function addPhotos(e){Array.from(e.target.files||[]).forEach(f=>{if(f.size>2*1024*1024){alert(`${f.name} is over 2 MB; resize it before adding.`);return}let rd=new FileReader();rd.onload=()=>{data.photos.push({name:f.name,src:rd.result});save();renderPhotos()};rd.readAsDataURL(f)});e.target.value=''}function renderPhotos(){photoGrid.innerHTML=data.photos.map((p,i)=>`<figure><img src="${p.src}" alt="${esc(p.name)}"><figcaption>${esc(p.name)} <button class="delete" onclick="removePhoto(${i})">Remove</button></figcaption></figure>`).join('')}function removePhoto(i){data.photos.splice(i,1);save();renderPhotos()}
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='family-golf-trip-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function restoreData(e){let f=e.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{data=JSON.parse(rd.result);save();render();alert('Backup restored')}catch(x){alert('Invalid backup file')}};rd.readAsText(f)}function resetApp(){if(confirm('Clear all trip data saved in this browser? Export a backup first if needed.')){data={trip:{},rounds:[],courses:[],lodging:{},restaurants:[],photos:[]};save();location.reload()}}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 render();
-</script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseUrl =
+  'https://alyxvykgbhfuqeyylusj.supabase.co';
+
+const supabaseKey =
+  'sb_publishable_qylxW5EaungFBEaXNzFpGw_Dsj2ihC4';
+
+const golfDB = window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
+
+async function testConnection() {
+  try {
+    const { data, error } = await golfDB
+      .from('golfers')
+      .select('*')
+      .limit(1);
+
+    if (error) throw error;
+
+    alert('Supabase connected successfully!');
+  } catch (error) {
+    alert('Database error: ' + error.message);
+  }
+}
+
+testConnection();
+</script>
