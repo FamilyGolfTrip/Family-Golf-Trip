@@ -56,7 +56,64 @@ render();
       'https://alyxvykgbhfuqeyylusj.supabase.co',
       'sb_publishable_qylxW5EaungFBEaXNzFpGw_Dsj2ihC4'
     );
+const resetButton = document.createElement('button');
+resetButton.type = 'button';
+resetButton.textContent = 'Forgot Password';
+form.appendChild(resetButton);
 
+resetButton.addEventListener('click', async () => {
+  const email = form.elements.email.value.trim();
+  if (!email) {
+    status.textContent = 'Please enter your email address.';
+    return;
+  }
+
+  const { error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://familygolftrip.github.io/Family-Golf-Trip/'
+  });
+
+  status.textContent = error
+    ? error.message
+    : 'Check your email for a password reset link.';
+});client.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    form.hidden = true;
+
+    const recoveryForm = document.createElement('form');
+
+    recoveryForm.innerHTML = `
+      <h3>Create a new password</h3>
+      <label>New password
+        <input name="newPassword" type="password"
+          minlength="8" autocomplete="new-password"
+          required>
+      </label>
+      <button type="submit">Save New Password</button>
+    `;
+
+    panel.insertBefore(recoveryForm, status);
+
+    status.textContent = 'Enter your new password.';
+
+    recoveryForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const { error } = await client.auth.updateUser({
+        password: recoveryForm.elements.newPassword.value
+      });
+
+      if (error) {
+        status.textContent = error.message;
+        return;
+      }
+
+      recoveryForm.remove();
+      await client.auth.signOut();
+      form.hidden = false;
+      status.textContent = 'Password updated. Please sign in.';
+    });
+  }
+});
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const button = form.querySelector('button');
