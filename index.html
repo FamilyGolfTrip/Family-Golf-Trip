@@ -219,6 +219,50 @@ scoreButton.addEventListener('click', async () => {
     status.textContent = 'Save failed: ' + error.message;
   }
 });
+    const handicapButton = document.createElement('button');
+handicapButton.type = 'button';
+handicapButton.textContent = 'Set Golfer Handicap';
+panel.appendChild(handicapButton);
+
+handicapButton.addEventListener('click', async () => {
+  try {
+    const name = prompt('Enter golfer name:');
+    if (!name || !name.trim()) return;
+
+    const entry = prompt('Enter Handicap Index (example: 18.5):');
+    if (entry === null || !entry.trim()) return;
+
+    const handicap = Number(entry);
+    if (!Number.isFinite(handicap) || handicap < -54 || handicap > 54) {
+      alert('Enter a valid handicap.');
+      return;
+    }
+
+    const { data: player, error: playerError } = await client
+      .from('golfers')
+      .select('id')
+      .eq('name', name.trim())
+      .single();
+
+    if (playerError) throw playerError;
+
+    const { error } = await client
+      .from('golfers')
+      .update({
+        handicap_index: handicap,
+        handicap_method: 'manual'
+      })
+      .eq('id', player.id)
+      .select('id')
+      .single();
+
+    if (error) throw error;
+
+    status.textContent = 'Handicap saved successfully: ' + name + ' - ' + handicap;
+  } catch (error) {
+    status.textContent = 'Handicap save failed: ' + error.message;
+  }
+});
   }
 }
 </script>
