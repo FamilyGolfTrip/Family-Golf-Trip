@@ -166,6 +166,59 @@ addGolferButton.addEventListener('click', async () => {
     ? 'Save failed: ' + error.message
     : 'Golfer saved successfully: ' + name.trim();
 });
+    const scoreButton = document.createElement('button');
+scoreButton.type = 'button';
+scoreButton.textContent = 'Save Score to Database';
+panel.appendChild(scoreButton);
+
+scoreButton.addEventListener('click', async () => {
+  try {
+    const name = prompt('Enter golfer name:');
+    if (!name || !name.trim()) return;
+
+    const course = prompt('Enter golf course name:');
+    if (!course || !course.trim()) return;
+
+    const date = prompt('Enter round date (YYYY-MM-DD):');
+    if (!date) return;
+
+    const score = Number(prompt('Enter gross score:'));
+    if (!Number.isInteger(score) || score <= 0) return;
+
+    const { data: player, error: playerError } = await client
+      .from('golfers')
+      .select('id')
+      .eq('name', name.trim())
+      .single();
+
+    if (playerError) throw playerError;
+
+    const { data: round, error: roundError } = await client
+      .from('golf_rounds')
+      .insert({
+        course_name: course.trim(),
+        round_date: date
+      })
+      .select('id')
+      .single();
+
+    if (roundError) throw roundError;
+
+    const { error: scoreError } = await client
+      .from('golf_scores')
+      .insert({
+        golfer_id: player.id,
+        round_id: round.id,
+        gross_score: score
+      });
+
+    if (scoreError) throw scoreError;
+
+    status.textContent = 'Golf score saved successfully!';
+  } catch (error) {
+    status.textContent = 'Save failed: ' + error.message;
+  }
+});
   }
 }
 </script>
