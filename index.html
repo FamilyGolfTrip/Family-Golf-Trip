@@ -147,6 +147,24 @@ testButton.addEventListener('click', async () => {
   status.textContent = error
     ? 'Database error: ' + error.message
     : 'Database connected! Golfers found: ' + golfers.length;
+});const addGolferButton = document.createElement('button');
+addGolferButton.type = 'button';
+addGolferButton.textContent = 'Add Golfer to Database';
+panel.appendChild(addGolferButton);
+
+addGolferButton.addEventListener('click', async () => {
+  const name = prompt('Enter golfer name:');
+  if (!name || !name.trim()) return;
+
+  const { error } = await client
+    .from('golfers')
+    .insert({ name: name.trim() })
+    .select('id, name')
+    .single();
+
+  status.textContent = error
+    ? 'Save failed: ' + error.message
+    : 'Golfer saved successfully: ' + name.trim();
 });
   }
 }
