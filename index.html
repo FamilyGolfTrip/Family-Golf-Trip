@@ -134,7 +134,20 @@ resetButton.addEventListener('click', async () => {
         form.elements.password.value = '';
         button.disabled = false;
       }
-    });
+    });const testButton = document.createElement('button');
+testButton.type = 'button';
+testButton.textContent = 'Test Database Connection';
+panel.appendChild(testButton);
+
+testButton.addEventListener('click', async () => {
+  const { data: golfers, error } = await client
+    .from('golfers')
+    .select('id, name');
+
+  status.textContent = error
+    ? 'Database error: ' + error.message
+    : 'Database connected! Golfers found: ' + golfers.length;
+});
   }
 }
 </script>
