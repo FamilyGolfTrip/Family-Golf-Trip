@@ -18,7 +18,17 @@
 <section class="panel" id="schedule"><div class="card"><h2>Courses & tee-time travel planner</h2><p class="small">Enter driving duration manually (or check directions in Maps). The app calculates when to leave to arrive 45 minutes before tee time.</p><div class="grid"><div><label>Course</label><input id="courseName" placeholder="Course name"></div><div><label>Address</label><input id="courseAddress" placeholder="Course address"></div><div><label>Date</label><input id="courseDate" type="date"></div><div><label>Tee time</label><input id="teeTime" type="time"></div><div><label>Drive time (minutes)</label><input id="driveMinutes" type="number" min="0" placeholder="e.g. 25"></div></div><button class="action" onclick="addCourse()">Add course / tee time</button><div id="courseList"></div></div></section>
 <section class="panel" id="lodging"><div class="card"><h2>Lodging details</h2><div class="grid"><div><label>Property / hotel / rental</label><input id="stayName" placeholder="Property name"></div><div><label>Address</label><input id="stayAddress" placeholder="Address"></div><div><label>Check-in</label><input id="checkIn" type="date"></div><div><label>Check-out</label><input id="checkOut" type="date"></div><div><label>Reservation / contact</label><input id="stayContact" placeholder="Confirmation or phone"></div></div><label>Notes</label><textarea id="stayNotes" rows="3" placeholder="Room details, directions, parking, etc."></textarea><button class="action" onclick="saveLodging()">Save lodging</button><div id="lodgingDisplay"></div></div></section>
 <section class="panel" id="food"><div class="card"><h2>Restaurants near the courses</h2><p class="small">Add restaurants the group likes. Use the course/address to open a map search.</p><div class="grid"><div><label>Restaurant</label><input id="restaurantName" placeholder="Restaurant name"></div><div><label>Near course / town</label><input id="restaurantNear" placeholder="Course or location"></div><div><label>Address / link</label><input id="restaurantLink" placeholder="Address or website"></div><div><label>Notes</label><input id="restaurantNotes" placeholder="Cuisine, group size, favorites"></div></div><button class="action" onclick="addRestaurant()">Add restaurant</button><div id="restaurantList"></div></div></section>
-<section class="panel" id="photos"><div class="card"><h2>Trip photo album</h2><p class="small">Select photos to add to this browser's local gallery. Photos aren't automatically shared with other family members; for shared storage, use a shared album or host this app online.</p><input id="photoFiles" type="file" accept="image/*" multiple onchange="addPhotos(event)"><div class="photo-grid" id="photoGrid"></div></div></section>
+<section class="panel" id="photos">
+  <div class="card">
+    <h2>Shared Family Photo Album</h2>
+    <p class="small">Select your annual golf trip and sign in to upload and view family photos.</p>
+    <input id="sharedPhotoFiles" type="file" accept="image/*" multiple>
+    <button class="action" id="uploadSharedPhotos">Upload Photos</button>
+    <button class="action" id="viewSharedPhotos">View Shared Photos</button>
+    <p id="sharedPhotoStatus"></p>
+    <div class="photo-grid" id="sharedPhotoGrid"></div>
+  </div>
+</section>
 <div class="card"><button class="action secondary" onclick="exportData()">Export trip backup (JSON)</button><label>Restore backup</label><input type="file" accept="application/json,.json" onchange="restoreData(event)"><button class="action delete" onclick="resetApp()">Clear this browser's trip data</button></div><div class="footer">Prototype app · Data saved locally in this browser · Export backups regularly</div></main>
 <script>
 const KEY='familyGolfTrip_v1';let data={trip:{},rounds:[],courses:[],lodging:{},restaurants:[],photos:[]};try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved)data=saved}catch(e){}
@@ -33,7 +43,7 @@ function renderCourses(){courseList.innerHTML=data.courses.map((c,i)=>{let leave
 function removeCourse(i){data.courses.splice(i,1);save();render()}function saveLodging(){data.lodging={name:stayName.value,address:stayAddress.value,in:checkIn.value,out:checkOut.value,contact:stayContact.value,notes:stayNotes.value};save();renderLodging()}function renderLodging(){let l=data.lodging||{};lodgingDisplay.innerHTML=l.name?`<hr><h3>${esc(l.name)}</h3><p>${esc(l.address||'')} · ${esc(l.in||'')} to ${esc(l.out||'')}</p><p>${esc(l.contact||'')}</p><p>${esc(l.notes||'')}</p><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.address||l.name)}">Map</a>`:'';if(l.name){stayName.value=l.name;stayAddress.value=l.address||'';checkIn.value=l.in||'';checkOut.value=l.out||'';stayContact.value=l.contact||'';stayNotes.value=l.notes||''}}
 function addRestaurant(){if(!restaurantName.value.trim()){alert('Enter a restaurant name');return}data.restaurants.push({name:restaurantName.value,near:restaurantNear.value,link:restaurantLink.value,notes:restaurantNotes.value});save();renderRestaurants();['restaurantName','restaurantNear','restaurantLink','restaurantNotes'].forEach(id=>document.getElementById(id).value='')}
 function renderRestaurants(){restaurantList.innerHTML=data.restaurants.map((r,i)=>{let q=r.link||r.near||r.name,href=/^https?:\/\//i.test(q)?q:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);return `<div class="card"><h3>${esc(r.name)}</h3><p>${esc(r.near||'')}</p><p>${esc(r.notes||'')}</p><a target="_blank" rel="noopener" href="${href}">Map / restaurant link</a> <button class="delete" onclick="removeRestaurant(${i})">Remove</button></div>`}).join(''}function removeRestaurant(i){data.restaurants.splice(i,1);save();renderRestaurants()}
-function addPhotos(e){Array.from(e.target.files||[]).forEach(f=>{if(f.size>2*1024*1024){alert(`${f.name} is over 2 MB; resize it before adding.`);return}let rd=new FileReader();rd.onload=()=>{data.photos.push({name:f.name,src:rd.result});save();renderPhotos()};rd.readAsDataURL(f)});e.target.value=''}function renderPhotos(){photoGrid.innerHTML=data.photos.map((p,i)=>`<figure><img src="${p.src}" alt="${esc(p.name)}"><figcaption>${esc(p.name)} <button class="delete" onclick="removePhoto(${i})">Remove</button></figcaption></figure>`).join('')}function removePhoto(i){data.photos.splice(i,1);save();renderPhotos()}
+function addPhotos(e){Array.from(e.target.files||[]).forEach(f=>{if(f.size>2*1024*1024){alert(`${f.name} is over 2 MB; resize it before adding.`);return}let rd=new FileReader();rd.onload=()=>{data.photos.push({name:f.name,src:rd.result});save();renderPhotos()};rd.readAsDataURL(f)});e.target.value=''}function renderPhotos(){if(!document.getElementById('photoGrid'))return;photoGrid.innerHTML=data.photos.map((p,i)=>`<figure><img src="${p.src}" alt="${esc(p.name)}"><figcaption>${esc(p.name)} <button class="delete" onclick="removePhoto(${i})">Remove</button></figcaption></figure>`).join('')}function removePhoto(i){data.photos.splice(i,1);save();renderPhotos()}
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='family-golf-trip-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function restoreData(e){let f=e.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{data=JSON.parse(rd.result);save();render();alert('Backup restored')}catch(x){alert('Invalid backup file')}};rd.readAsText(f)}function resetApp(){if(confirm('Clear all trip data saved in this browser? Export a backup first if needed.')){data={trip:{},rounds:[],courses:[],lodging:{},restaurants:[],photos:[]};save();location.reload()}}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 render();
 </script>
@@ -533,7 +543,111 @@ tripSelect.addEventListener('change', () => {
 client.auth.onAuthStateChange(() => {
   setTimeout(loadAnnualTrips, 0);
 });
+  }const photoStatus = document.getElementById('sharedPhotoStatus');
+const photoGallery = document.getElementById('sharedPhotoGrid');
+const photoInput = document.getElementById('sharedPhotoFiles');
+const photoBucket = client.storage.from('golf-trip-photos');
+
+async function getPhotoTrip() {
+  const { data, error } = await client.auth.getSession();
+  if (error) throw error;
+  if (!data.session) throw new Error('Please sign in first.');
+
+  const tripId = document.getElementById('annualTripSelect').value;
+  if (!tripId) throw new Error('Please select an annual golf trip.');
+  return tripId;
+}
+
+async function loadSharedPhotos() {
+  photoGallery.replaceChildren();
+  photoStatus.textContent = 'Loading photos...';
+
+  try {
+    const tripId = await getPhotoTrip();
+    const { data: files, error } = await photoBucket.list(tripId, {
+      limit: 100,
+      sortBy: { column: 'created_at', order: 'desc' }
+    });
+
+    if (error) throw error;
+
+    for (const file of files) {
+      if (!file.id) continue;
+
+      const { data, error } = await photoBucket.createSignedUrl(
+        tripId + '/' + file.name, 3600
+      );
+
+      if (error) throw error;
+
+      if (document.getElementById('annualTripSelect').value !== tripId) return;
+
+      const img = document.createElement('img');
+      img.src = data.signedUrl;
+      img.alt = 'Family golf trip photo';
+      img.loading = 'lazy';
+      img.style.width = '100%';
+      img.style.borderRadius = '8px';
+      photoGallery.appendChild(img);
+    }
+
+    photoStatus.textContent = photoGallery.children.length
+      ? 'Shared photos loaded.'
+      : 'No photos uploaded for this trip yet.';
+  } catch (error) {
+    photoStatus.textContent = error.message;
   }
+}
+
+document.getElementById('uploadSharedPhotos').addEventListener('click', async () => {
+  const button = document.getElementById('uploadSharedPhotos');
+  button.disabled = true;
+
+  try {
+    const tripId = await getPhotoTrip();
+    const files = Array.from(photoInput.files);
+
+    if (!files.length) throw new Error('Please select photos first.');
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please select image files only.');
+      }
+
+      photoStatus.textContent = 'Uploading ' + file.name;
+
+      const path = tripId + '/' + crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      const { error } = await photoBucket.upload(path, file, {
+        contentType: file.type,
+        upsert: false
+      });
+
+      if (error) throw error;
+    }
+
+    photoInput.value = '';
+    await loadSharedPhotos();
+  } catch (error) {
+    photoStatus.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById('viewSharedPhotos').addEventListener('click', loadSharedPhotos);
+
+document.getElementById('annualTripSelect').addEventListener('change', () => {
+  photoGallery.replaceChildren();
+  photoStatus.textContent = 'Click View Shared Photos.';
+});
+
+client.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_OUT') {
+    photoGallery.replaceChildren();
+    photoStatus.textContent = 'Please sign in.';
+  }
+});
 }
 </script>
 </body>
