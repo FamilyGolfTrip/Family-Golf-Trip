@@ -263,6 +263,101 @@ handicapButton.addEventListener('click', async () => {
     status.textContent = 'Handicap save failed: ' + error.message;
   }
 });
+ const viewButton = document.createElement('button');
+viewButton.type = 'button';
+viewButton.textContent = 'View Shared Scoreboard';
+panel.appendChild(viewButton);
+
+const sharedBoard = document.createElement('div');
+sharedBoard.style.marginTop = '20px';
+sharedBoard.style.overflowX = 'auto';
+panel.appendChild(sharedBoard);
+
+viewButton.addEventListener('click', async () => {
+  try {
+    const { data: sessionData, error: authError } =
+      await client.auth.getSession();
+
+    if (authError) throw authError;
+    if (!sessionData.session) {
+      sharedBoard.textContent = '';
+      status.textContent = 'Please sign in first.';
+      return;
+    }
+
+    const { data: players, error: playerError } =
+      await client.from('golfers')
+        .select('id, name, handicap_index')
+        .order('name');
+
+    if (playerError) throw playerError;
+
+    const { data: scores, error: scoreError } =
+      await client.from('golf_scores')
+        .select('golfer_id, gross_score, net_score');
+
+    if (scoreError) throw scoreError;
+
+    sharedBoard.replaceChildren();
+
+    const heading = document.createElement('h2');
+    heading.textContent = 'Shared Family Scoreboard';
+    sharedBoard.appendChild(heading);
+
+    const table = document.createElement('table');
+    table.style.width = '100%';
+
+    const header = table.insertRow();
+
+    ['Golfer', 'Handicap', 'Rounds',
+     'Gross Avg', 'Net Avg'].forEach(label => {
+      const cell = document.createElement('th');
+      cell.textContent = label;
+      header.appendChild(cell);
+    });
+
+    players.forEach(player => {
+      const rounds = scores.filter(
+        s => s.golfer_id === player.id
+      );
+
+      const grossAvg = rounds.length
+        ? (rounds.reduce(
+            (sum, s) => sum + Number(s.gross_score), 0
+          ) / rounds.length).toFixed(1)
+        : '-';
+
+      const netRounds = rounds.filter(
+        s => s.net_score !== null
+      );
+
+      const netAvg = netRounds.length
+        ? (netRounds.reduce(
+            (sum, s) => sum + Number(s.net_score), 0
+          ) / netRounds.length).toFixed(1)
+        : '-';
+
+      const row = table.insertRow();
+
+      [
+        player.name,
+        player.handicap_index ?? '-',
+        rounds.length,
+        grossAvg,
+        netAvg
+      ].forEach(value => {
+        row.insertCell().textContent = value;
+      });
+    });
+
+    sharedBoard.appendChild(table);
+    status.textContent = 'Shared scoreboard loaded.';
+  } catch (error) {
+    sharedBoard.textContent = '';
+    status.textContent =
+      'Scoreboard error: ' + error.message;
+  }
+}); 
   }
 }
 </script>
