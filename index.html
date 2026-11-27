@@ -4,7 +4,15 @@
 :root{--bg:#eef3ed;--ink:#18332b;--muted:#62736b;--card:#fff;--accent:#276749;--line:#d9e4dc;--gold:#d7b56d}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}header{background:linear-gradient(130deg,#153d2e,#397450);color:white;padding:26px 20px 24px}header h1{margin:0;font-size:27px}header p{margin:8px 0 0;opacity:.85}.wrap{max-width:1100px;margin:auto;padding:18px}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 18px}.tab{border:0;border-radius:999px;padding:11px 16px;background:#dce8df;color:var(--ink);font-weight:700;cursor:pointer}.tab.active{background:var(--accent);color:white}.panel{display:none}.panel.active{display:block}.card{background:var(--card);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 3px 12px #163b2d0d}.card h2,.card h3{margin:0 0 12px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.stat{background:#f3f7f3;border-radius:12px;padding:15px}.stat strong{font-size:25px;display:block}.stat span{font-size:13px;color:var(--muted)}label{display:block;font-size:13px;font-weight:700;margin:9px 0 5px}input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font:inherit;color:var(--ink);background:white}button.action{background:var(--accent);color:white;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;margin-top:10px}button.secondary{background:#e6efe8;color:var(--ink)}button.delete{background:#f6e5e1;color:#812d22;border:0;border-radius:8px;padding:6px 10px;cursor:pointer}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 8px}th{color:var(--muted)}.scroll{overflow:auto}.small{font-size:13px;color:var(--muted)}.pill{background:#e5efe7;border-radius:999px;padding:4px 9px;font-size:12px}.photo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.photo-grid img{width:100%;height:170px;object-fit:cover;border-radius:12px}.photo-grid figure{margin:0}.photo-grid figcaption{padding:6px;font-size:12px}.notice{background:#fff8e9;padding:12px;border-radius:10px;color:#725520;font-size:13px}.footer{padding:14px;text-align:center;color:var(--muted);font-size:12px} @media(max-width:600px){header h1{font-size:23px}.wrap{padding:12px}.card{padding:14px}}
 </style></head><body>
 <header><h1>⛳ Family Golf Trip</h1><p>Your shared hub for rounds, handicaps, travel, lodging, photos & food.</p></header><main class="wrap">
-<div class="card"><div class="grid"><div><label>Trip name</label><input id="tripName" placeholder="Annual Family Golf Trip"></div><div><label>Destination / year</label><input id="destination" placeholder="Town, courses, year"></div><div><label>Trip dates</label><input id="tripDates" placeholder="e.g. June 12–16"></div></div><button class="action" onclick="saveTrip()">Save trip details</button></div>
+<div class="card" id="annualTripPanel">
+  <h2>Annual Golf Trips</h2>
+  <label for="annualTripSelect">Select Annual Trip</label>
+  <select id="annualTripSelect">
+    <option value="">Select a trip</option>
+  </select>
+  <p id="annualTripStatus">Select your annual golf trip.</p>
+</div>
+  <div class="card"><div class="grid"><div><label>Trip name</label><input id="tripName" placeholder="Annual Family Golf Trip"></div><div><label>Destination / year</label><input id="destination" placeholder="Town, courses, year"></div><div><label>Trip dates</label><input id="tripDates" placeholder="e.g. June 12–16"></div></div><button class="action" onclick="saveTrip()">Save trip details</button></div>
 <nav class="tabs"><button class="tab active" onclick="showTab('scores',this)">Scores & handicaps</button><button class="tab" onclick="showTab('schedule',this)">Courses & schedule</button><button class="tab" onclick="showTab('lodging',this)">Lodging</button><button class="tab" onclick="showTab('food',this)">Restaurants</button><button class="tab" onclick="showTab('photos',this)">Photos</button></nav>
 <section class="panel active" id="scores"><div class="card"><h2>Score dashboard</h2><div class="grid" id="stats"></div><p class="small">Handicap estimate uses the average of the lowest 8 score differentials from the available 20 (or the best 3 when fewer than 20 rounds are entered), multiplied by 0.96. This is a simplified estimate—not an official WHS Handicap Index calculation.</p></div><div class="card"><h3>Add a round</h3><div class="grid"><div><label>Golfer</label><input id="golfer" placeholder="Name"></div><div><label>Date</label><input id="roundDate" type="date"></div><div><label>Course</label><input id="roundCourse" placeholder="Course name"></div><div><label>Gross score</label><input id="gross" type="number" min="1" placeholder="Score"></div><div><label>Course rating</label><input id="rating" type="number" step="0.1" value="72"></div><div><label>Slope rating</label><input id="slope" type="number" value="113"></div><div><label>Net score (optional)</label><input id="net" type="number" min="1" placeholder="If known"></div></div><button class="action" onclick="addRound()">Add score</button><label>Import scores CSV</label><input type="file" id="csv" accept=".csv,text/csv" onchange="importCSV(event)"><p class="small">CSV headers: golfer,date,course,gross,rating,slope,net. Each row is one round.</p></div><div class="card"><h3>Golfer averages & handicap estimates</h3><div class="scroll"><table><thead><tr><th>Golfer</th><th>Rounds</th><th>Gross avg</th><th>Net avg</th><th>Estimated index</th></tr></thead><tbody id="summary"></tbody></table></div></div><div class="card"><h3>All rounds</h3><div class="scroll"><table><thead><tr><th>Golfer</th><th>Date</th><th>Course</th><th>Gross</th><th>Net</th><th>Differential</th><th></th></tr></thead><tbody id="roundRows"></tbody></table></div></div></section>
 <section class="panel" id="schedule"><div class="card"><h2>Courses & tee-time travel planner</h2><p class="small">Enter driving duration manually (or check directions in Maps). The app calculates when to leave to arrive 45 minutes before tee time.</p><div class="grid"><div><label>Course</label><input id="courseName" placeholder="Course name"></div><div><label>Address</label><input id="courseAddress" placeholder="Course address"></div><div><label>Date</label><input id="courseDate" type="date"></div><div><label>Tee time</label><input id="teeTime" type="time"></div><div><label>Drive time (minutes)</label><input id="driveMinutes" type="number" min="0" placeholder="e.g. 25"></div></div><button class="action" onclick="addCourse()">Add course / tee time</button><div id="courseList"></div></div></section>
@@ -471,6 +479,46 @@ historyButton.addEventListener('click', async () => {
     status.textContent =
       'History error: ' + error.message;
   }
+});
+    const tripSelect = document.getElementById('annualTripSelect');
+const tripStatus = document.getElementById('annualTripStatus');
+
+async function loadAnnualTrips() {
+  try {
+    tripSelect.replaceChildren(
+      new Option('Select a trip', '')
+    );
+
+    const { data: trips, error } = await client
+      .from('golf_trips')
+      .select('*')
+      .order('trip_year', { ascending: false });
+
+    if (error) throw error;
+
+    trips.forEach(trip => {
+      tripSelect.add(new Option(
+        trip.trip_year + ' - ' + (trip.destination || trip.trip_name),
+        trip.id
+      ));
+    });
+
+    tripStatus.textContent = trips.length
+      ? 'Select your annual golf trip.'
+      : 'No trips available. Please sign in.';
+  } catch (error) {
+    tripStatus.textContent = error.message;
+  }
+}
+
+tripSelect.addEventListener('change', () => {
+  tripStatus.textContent = tripSelect.value
+    ? 'Selected: ' + tripSelect.selectedOptions[0].text
+    : 'Select your annual golf trip.';
+});
+
+client.auth.onAuthStateChange(() => {
+  setTimeout(loadAnnualTrips, 0);
 });
   }
 }
