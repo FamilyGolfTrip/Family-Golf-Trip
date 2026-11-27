@@ -222,12 +222,16 @@ scoreButton.addEventListener('click', async () => {
     );
 
     const netScore = score - playingHandicap;
-
+if (!document.getElementById('annualTripSelect').value) {
+  alert('Please select an annual golf trip first.');
+  return;
+}
     const { data: round, error: roundError } = await client
       .from('golf_rounds')
       .insert({
-        course_name: course.trim(),
-        round_date: date
+       course_name: course.trim(),
+round_date: date,
+trip_id: document.getElementById('annualTripSelect').value
       })
       .select('id')
       .single();
