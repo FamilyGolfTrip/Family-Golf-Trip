@@ -185,13 +185,35 @@ scoreButton.addEventListener('click', async () => {
     const score = Number(prompt('Enter gross score:'));
     if (!Number.isInteger(score) || score <= 0) return;
 
+    const rating = Number(prompt('Enter course rating (example: 71.5):'));
+    if (!Number.isFinite(rating) || rating <= 0) return;
+
+    const slope = Number(prompt('Enter slope rating (example: 125):'));
+    if (!Number.isInteger(slope) || slope < 55 || slope > 155) return;
+
+    const par = Number(prompt('Enter course par (example: 72):'));
+    if (!Number.isInteger(par) || par <= 0) return;
+
     const { data: player, error: playerError } = await client
       .from('golfers')
-      .select('id')
+      .select('id, handicap_index')
       .eq('name', name.trim())
       .single();
 
     if (playerError) throw playerError;
+
+    if (player.handicap_index === null) {
+      alert('Please set this golfer handicap first.');
+      return;
+    }
+
+    const handicap = Number(player.handicap_index);
+
+    const playingHandicap = Math.round(
+      handicap * slope / 113 + rating - par
+    );
+
+    const netScore = score - playingHandicap;
 
     const { data: round, error: roundError } = await client
       .from('golf_rounds')
@@ -209,12 +231,22 @@ scoreButton.addEventListener('click', async () => {
       .insert({
         golfer_id: player.id,
         round_id: round.id,
-        gross_score: score
+        gross_score: score,
+        course_rating: rating,
+        slope_rating: slope,
+        course_par: par,
+        handicap_used: handicap,
+        playing_handicap: playingHandicap,
+        net_score: netScore
       });
 
     if (scoreError) throw scoreError;
 
-    status.textContent = 'Golf score saved successfully!';
+    status.textContent =
+      'Score saved successfully! Gross: ' + score +
+      ' | Playing Handicap: ' + playingHandicap +
+      ' | Net Score: ' + netScore;
+
   } catch (error) {
     status.textContent = 'Save failed: ' + error.message;
   }
