@@ -390,6 +390,88 @@ viewButton.addEventListener('click', async () => {
       'Scoreboard error: ' + error.message;
   }
 }); 
+  const historyButton = document.createElement('button');
+historyButton.type = 'button';
+historyButton.textContent = 'View Score History';
+panel.appendChild(historyButton);
+
+historyButton.addEventListener('click', async () => {
+  try {
+    const { data: sessionData, error: authError } =
+      await client.auth.getSession();
+
+    if (authError) throw authError;
+
+    if (!sessionData.session) {
+      status.textContent = 'Please sign in first.';
+      return;
+    }
+
+    const name = prompt('Enter golfer name:');
+    if (!name || !name.trim()) return;
+
+    const { data: player, error: playerError } =
+      await client.from('golfers')
+        .select('id, name')
+        .eq('name', name.trim())
+        .single();
+
+    if (playerError) throw playerError;
+
+    const { data: history, error: historyError } =
+      await client.from('golf_scores')
+        .select('*, golf_rounds(course_name, round_date)')
+        .eq('golfer_id', player.id);
+
+    if (historyError) throw historyError;
+
+    history.sort((a, b) =>
+      (b.golf_rounds?.round_date || '').localeCompare(
+        a.golf_rounds?.round_date || ''
+      )
+    );
+
+    sharedBoard.replaceChildren();
+
+    const heading = document.createElement('h2');
+    heading.textContent = player.name + ' - Score History';
+    sharedBoard.appendChild(heading);
+
+    const table = document.createElement('table');
+    table.style.width = '100%';
+
+    const header = table.insertRow();
+
+    ['Date', 'Course', 'Gross', 'Handicap',
+      'Net'].forEach(label => {
+      const cell = document.createElement('th');
+      cell.textContent = label;
+      header.appendChild(cell);
+    });
+
+    history.forEach(s => {
+      const row = table.insertRow();
+
+      [
+        s.golf_rounds?.round_date ?? '-',
+        s.golf_rounds?.course_name ?? '-',
+        s.gross_score ?? '-',
+        s.playing_handicap ?? '-',
+        s.net_score ?? '-'
+      ].forEach(value => {
+        row.insertCell().textContent = value;
+      });
+    });
+
+    sharedBoard.appendChild(table);
+    status.textContent = history.length +
+      ' rounds found.';
+
+  } catch (error) {
+    status.textContent =
+      'History error: ' + error.message;
+  }
+});
   }
 }
 </script>
