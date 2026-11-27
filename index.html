@@ -336,9 +336,18 @@ viewButton.addEventListener('click', async () => {
 
     if (playerError) throw playerError;
 
-    const { data: scores, error: scoreError } =
-      await client.from('golf_scores')
-        .select('golfer_id, gross_score, net_score');
+   const selectedTripId =
+  document.getElementById('annualTripSelect').value;
+
+if (!selectedTripId) {
+  alert('Please select an annual golf trip first.');
+  return;
+}
+
+const { data: scores, error: scoreError } =
+  await client.from('golf_scores')
+    .select('golfer_id, gross_score, net_score, golf_rounds!inner(trip_id)')
+    .eq('golf_rounds.trip_id', selectedTripId);
 
     if (scoreError) throw scoreError;
 
