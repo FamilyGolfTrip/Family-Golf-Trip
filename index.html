@@ -588,7 +588,7 @@ async function loadSharedPhotos() {
       img.loading = 'lazy';
       img.style.width = '100%';
       img.style.borderRadius = '8px';
-      img.style.cursor = 'zoom-in'; img.title = 'Click to enlarge photo'; img.addEventListener('click', () => window.open(img.src, '_blank', 'noopener,noreferrer')); photoGallery.appendChild(img);
+      img.style.cursor = 'zoom-in'; img.title = 'Click to enlarge photo'; img.addEventListener('click', () => window.open(img.src, '_blank', 'noopener,noreferrer')); const photoCard = document.createElement('div'); photoCard.appendChild(img); const downloadBtn = document.createElement('button'); downloadBtn.type = 'button'; downloadBtn.className = 'action'; downloadBtn.textContent = 'Download Photo'; downloadBtn.onclick = async () => { try { const { data: blob, error } = await photoBucket.download(tripId + '/' + file.name); if (error) throw error; const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000); } catch (error) { alert(error.message); } }; photoCard.appendChild(downloadBtn); photoGallery.appendChild(photoCard);
     }
 
     photoStatus.textContent = photoGallery.children.length
